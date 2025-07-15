@@ -87,7 +87,6 @@ export const PlantIdentifier: React.FC<PlantIdentifierProps> = ({ userPreference
                     <Upload size={20} />
                     <span>Choose Image</span>
                   </button>
-                  <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2">
                   <button className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center space-x-2">
                     <Camera size={20} />
                     <span>Take Photo</span>
