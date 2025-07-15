@@ -1,49 +1,38 @@
 # AI-Powered Farming Assistant
 
-A comprehensive farming assistant application with real AI integration, plant identification, weather data, and voice interaction capabilities.
+A comprehensive farming assistant application with AI integration, plant identification, weather data, voice interaction capabilities, and dark mode support.
 
 ## Features
 
-- **Real AI Chat**: Powered by Google's Gemini AI for intelligent farming advice
-- **Plant Identification**: Upload plant images for AI-powered identification and health assessment
-- **Weather Integration**: Real-time weather data with farming-specific advice
+- **AI Chat**: Intelligent farming advice with fallback responses
+- **Plant Identification**: Upload plant images for identification and health assessment using free APIs
+- **Weather Integration**: Real-time weather data with farming-specific advice using free weather services
 - **Voice Assistant**: Speech recognition and synthesis for hands-free interaction
 - **Multi-language Support**: Configurable language preferences
+- **Dark Mode**: Toggle between light and dark themes with system preference detection
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
 
 ## Setup Instructions
 
-### 1. API Keys Required
+### 1. API Keys (Optional)
 
-Create a `.env.local` file in the root directory with the following API keys:
+The application works with free APIs and fallback responses. For enhanced functionality, you can optionally add API keys by creating a `.env.local` file:
 
 ```env
-# Google Gemini AI (Required for chat functionality)
-VITE_GEMINI_API_KEY=your_gemini_api_key_here
 
-# OpenWeatherMap API (Required for weather data)
+# OpenWeatherMap API (Optional - falls back to free weather API)
 VITE_WEATHER_API_KEY=your_openweather_api_key_here
 
-# Plant.id API (Required for plant identification)
-VITE_PLANT_API_KEY=your_plant_id_api_key_here
+# Note: Plant identification uses free PlantNet API
+# Note: AI chat uses free Hugging Face API with intelligent fallbacks
 ```
 
-### 2. Getting API Keys
-
-#### Google Gemini AI
-1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Create a new API key
-3. Copy the key to `VITE_GEMINI_API_KEY`
+### 2. Getting API Keys (Optional)
 
 #### OpenWeatherMap
 1. Sign up at [OpenWeatherMap](https://openweathermap.org/api)
 2. Get a free API key
 3. Copy the key to `VITE_WEATHER_API_KEY`
-
-#### Plant.id
-1. Sign up at [Plant.id](https://web.plant.id/)
-2. Get an API key (free tier available)
-3. Copy the key to `VITE_PLANT_API_KEY`
 
 ### 3. Installation
 
@@ -59,6 +48,7 @@ npm run dev
 3. **Plant Identification**: Upload plant photos for identification and care advice
 4. **Weather Advice**: Get location-specific weather and farming recommendations
 5. **Voice Assistant**: Use voice commands for hands-free interaction
+6. **Dark Mode**: Toggle between light and dark themes in the sidebar
 6. **Dashboard**: Track your farming activities and insights
 
 ## Browser Compatibility
@@ -70,19 +60,20 @@ npm run dev
 ## Technical Stack
 
 - **Frontend**: React + TypeScript + Tailwind CSS
-- **AI Service**: Google Gemini AI
-- **Weather API**: OpenWeatherMap
-- **Plant ID**: Plant.id API
+- **AI Service**: Hugging Face Inference API (free) with intelligent fallbacks
+- **Weather API**: wttr.in (free) with OpenWeatherMap fallback
+- **Plant ID**: PlantNet API (free) with basic analysis fallback
 - **Voice**: Web Speech API
 - **Build Tool**: Vite
 
 ## Fallback Behavior
 
-The application includes fallback responses when APIs are unavailable:
+The application is designed to work entirely with free services and includes comprehensive fallback responses:
 - Chat continues with basic responses if AI service fails
-- Weather shows cached/demo data if API is down
-- Plant identification provides general care advice if service fails
+- Weather shows demo data if free APIs are unavailable
+- Plant identification provides general care advice with basic analysis
 - Voice features gracefully degrade if not supported
+- Dark mode persists user preference and respects system settings
 
 ## Contributing
 

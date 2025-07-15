@@ -1,48 +1,89 @@
-import axios from 'axios';
 import { WeatherData } from '../types';
-
-const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
-const BASE_URL = 'https://api.openweathermap.org/data/2.5';
 
 export class WeatherService {
   async getCurrentWeather(location: string): Promise<WeatherData> {
     try {
-      // Get coordinates for the location
-      const geoResponse = await axios.get(
-        `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location)}&limit=1&appid=${WEATHER_API_KEY}`
-      );
-
-      if (geoResponse.data.length === 0) {
-        throw new Error('Location not found');
+      // Using OpenWeatherMap's free tier (requires API key but has generous free limits)
+      // Fallback to free weather API if no key is provided
+      const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
+      
+      if (apiKey && apiKey !== 'demo-key') {
+        return await this.getOpenWeatherData(location, apiKey);
+      } else {
+        // Use free weather API as fallback
+        return await this.getFreeWeatherData(location);
       }
-
-      const { lat, lon } = geoResponse.data[0];
-
-      // Get current weather
-      const weatherResponse = await axios.get(
-        `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${WEATHER_API_KEY}&units=metric`
-      );
-
-      // Get 5-day forecast
-      const forecastResponse = await axios.get(
-        `${BASE_URL}/forecast?lat=${lat}&lon=${lon}&appid=${WEATHER_API_KEY}&units=metric`
-      );
-
-      const current = weatherResponse.data;
-      const forecast = forecastResponse.data;
-
-      return {
-        location: `${current.name}, ${current.sys.country}`,
-        temperature: Math.round(current.main.temp),
-        humidity: current.main.humidity,
-        conditions: this.capitalizeWords(current.weather[0].description),
-        advice: this.generateFarmingAdvice(current),
-        forecast: this.processForecast(forecast.list)
-      };
     } catch (error) {
       console.error('Weather Service Error:', error);
       return this.getFallbackWeatherData(location);
     }
+  }
+
+  private async getFreeWeatherData(location: string): Promise<WeatherData> {
+    try {
+      // Using wttr.in free weather API
+      const response = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`);
+      const data = await response.json();
+      
+      const current = data.current_condition[0];
+      const forecast = data.weather;
+
+      return {
+        location: `${data.nearest_area[0].areaName[0].value}, ${data.nearest_area[0].country[0].value}`,
+        temperature: parseInt(current.temp_C),
+        humidity: parseInt(current.humidity),
+        conditions: current.weatherDesc[0].value,
+        advice: this.generateFarmingAdvice({
+          main: { temp: parseInt(current.temp_C), humidity: parseInt(current.humidity) },
+          weather: [{ main: current.weatherDesc[0].value }]
+        }),
+        forecast: forecast.slice(0, 5).map((day: any, index: number) => ({
+          day: index === 0 ? 'Today' : new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
+          temp: parseInt(day.maxtempC),
+          condition: day.hourly[0].weatherDesc[0].value
+        }))
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private async getOpenWeatherData(location: string, apiKey: string): Promise<WeatherData> {
+    const BASE_URL = 'https://api.openweathermap.org/data/2.5';
+    
+    // Get coordinates for the location
+    const geoResponse = await fetch(
+      `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(location)}&limit=1&appid=${apiKey}`
+    );
+
+    const geoData = await geoResponse.json();
+    if (geoData.length === 0) {
+      throw new Error('Location not found');
+    }
+
+    const { lat, lon } = geoData[0];
+
+    // Get current weather
+    const weatherResponse = await fetch(
+      `${BASE_URL}/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
+    );
+
+    // Get 5-day forecast
+    const forecastResponse = await fetch(
+      `${BASE_URL}/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
+    );
+
+    const current = await weatherResponse.json();
+    const forecast = await forecastResponse.json();
+
+    return {
+      location: `${current.name}, ${current.sys.country}`,
+      temperature: Math.round(current.main.temp),
+      humidity: current.main.humidity,
+      conditions: this.capitalizeWords(current.weather[0].description),
+      advice: this.generateFarmingAdvice(current),
+      forecast: this.processForecast(forecast.list)
+    };
   }
 
   private generateFarmingAdvice(weatherData: any): string[] {
@@ -131,9 +172,10 @@ export class WeatherService {
       humidity: 65,
       conditions: 'Partly Cloudy',
       advice: [
-        'Unable to fetch current weather data',
-        'Please check your internet connection',
-        'Consider checking local weather services for current conditions'
+        'Weather data temporarily unavailable',
+        'General advice: Check soil moisture before watering',
+        'Monitor plants for signs of stress in current conditions',
+        'Consider local weather patterns for your region'
       ],
       forecast: [
         { day: 'Today', temp: 22, condition: 'Partly Cloudy' },
