@@ -39,6 +39,24 @@ function App() {
     setActiveTab('chat');
   };
 
+  const handleVoiceCommand = (command: string, response: string) => {
+    // Handle voice commands that might change tabs
+    const lowerCommand = command.toLowerCase();
+    
+    if (lowerCommand.includes('dashboard') || lowerCommand.includes('show dashboard')) {
+      setActiveTab('dashboard');
+    } else if (lowerCommand.includes('weather') || lowerCommand.includes('check weather')) {
+      setActiveTab('weather');
+    } else if (lowerCommand.includes('plant') || lowerCommand.includes('identify plant')) {
+      setActiveTab('plant');
+    } else if (lowerCommand.includes('chat') || lowerCommand.includes('talk')) {
+      setActiveTab('chat');
+    }
+    
+    if (lowerCommand.includes('stop listening') || lowerCommand.includes('stop voice')) {
+      setIsVoiceActive(false);
+    }
+  };
   if (userPreferences.isFirstTime) {
     return (
       <WelcomeScreen 
@@ -59,6 +77,8 @@ function App() {
         userPreferences={userPreferences}
         isDarkMode={isDarkMode}
         onDarkModeToggle={toggleDarkMode}
+        isVoiceActive={isVoiceActive}
+        onVoiceToggle={setIsVoiceActive}
       />
       
       <main className="flex-1 overflow-hidden">
@@ -86,6 +106,7 @@ function App() {
         onToggle={setIsVoiceActive}
         userPreferences={userPreferences}
         isDarkMode={isDarkMode}
+        onVoiceCommand={handleVoiceCommand}
       />
     </div>
   );

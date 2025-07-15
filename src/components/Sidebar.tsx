@@ -9,6 +9,8 @@ interface SidebarProps {
   userPreferences: UserPreferences;
   isDarkMode: boolean;
   onDarkModeToggle: () => void;
+  isVoiceActive: boolean;
+  onVoiceToggle: (active: boolean) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -16,7 +18,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onTabChange, 
   userPreferences, 
   isDarkMode, 
-  onDarkModeToggle 
+  onDarkModeToggle,
+  isVoiceActive,
+  onVoiceToggle
 }) => {
   const menuItems = [
     { id: 'chat', icon: MessageSquare, label: 'Chat', description: 'Ask questions' },
@@ -71,6 +75,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Footer */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        {/* Voice Assistant Toggle */}
+        <div className="mb-4">
+          <button
+            onClick={() => onVoiceToggle(!isVoiceActive)}
+            className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+              isVoiceActive
+                ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-2 border-green-200 dark:border-green-700'
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+            }`}
+          >
+            <Mic size={20} className={isVoiceActive ? 'text-green-500 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'} />
+            <div>
+              <div className="font-medium">Voice Assistant</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {isVoiceActive ? 'Active' : 'Click to activate'}
+              </div>
+            </div>
+            {isVoiceActive && (
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            )}
+          </button>
+        </div>
+
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Theme</span>
           <DarkModeToggle isDarkMode={isDarkMode} onToggle={onDarkModeToggle} />

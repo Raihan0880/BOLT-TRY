@@ -127,7 +127,11 @@ Answer:`;
   }
 
   async generateVoiceResponse(transcript: string, userPreferences: UserPreferences): Promise<string> {
-    const response = await this.generateResponse(transcript, userPreferences, "Keep this response concise and conversational for voice interaction.");
+    const response = await this.generateResponse(
+      transcript, 
+      userPreferences, 
+      "Keep this response concise and conversational for voice interaction. Limit to 2-3 sentences maximum."
+    );
     return response;
   }
 }

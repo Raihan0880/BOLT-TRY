@@ -101,6 +101,12 @@ export class VoiceService {
   getAvailableVoices(): SpeechSynthesisVoice[] {
     return this.synthesis ? this.synthesis.getVoices() : [];
   }
+
+  setLanguage(language: string): void {
+    if (this.recognition) {
+      this.recognition.lang = language;
+    }
+  }
 }
 
 export const voiceService = new VoiceService();

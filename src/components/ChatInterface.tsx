@@ -4,6 +4,7 @@ import { Message, UserPreferences } from '../types';
 import { ChatMessage } from './ChatMessage';
 import { TypingIndicator } from './TypingIndicator';
 import { aiService } from '../services/aiService';
+import { voiceService } from '../services/voiceService';
 
 interface ChatInterfaceProps {
   userPreferences: UserPreferences;
@@ -29,6 +30,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -38,6 +40,44 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Handle voice command from voice assistant
+  const handleVoiceCommand = (command: string, response: string) => {
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: command,
+      isUser: true,
+      timestamp: new Date(),
+      type: 'text'
+    };
+
+    const aiMessage: Message = {
+      id: (Date.now() + 1).toString(),
+      text: response,
+      isUser: false,
+      timestamp: new Date(),
+      type: 'text'
+    };
+
+    setMessages(prev => [...prev, userMessage, aiMessage]);
+  };
+
+  const handleVoiceInput = async () => {
+    if (!voiceService.isSupported()) {
+      alert('Voice input is not supported in this browser');
+      return;
+    }
+
+    try {
+      setIsListening(true);
+      const transcript = await voiceService.startListening();
+      setInputText(transcript);
+      setIsListening(false);
+    } catch (error) {
+      console.error('Voice input error:', error);
+      setIsListening(false);
+    }
+  };
 
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -56,14 +96,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     try {
       const aiResponse = await aiService.generateResponse(text, userPreferences);
-      const aiResponse: Message = {
+      const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: aiResponse,
         isUser: false,
         timestamp: new Date(),
         type: 'text'
       };
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error('Error getting AI response:', error);
       const errorMessage: Message = {
@@ -88,8 +128,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-        <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Farm Assistant Chat</h2>
-        <p className="text-sm text-gray-600 dark:text-gray-400">Ask me anything about farming, plants, or weather</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">Farm Assistant Chat</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Ask me anything about farming, plants, or weather</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            {voiceService.isSupported() && (
+              <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                <span>Voice enabled</span>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Messages */}
@@ -130,6 +182,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           
           <button
             type="button"
+            onClick={handleVoiceInput}
+            disabled={isListening}
+            className={`p-3 rounded-xl transition-all duration-300 ${
+              isListening
+                ? 'bg-green-500 text-white animate-pulse'
+                : 'bg-gray-100 dark:bg-gray-700 hover:bg-green-50 dark:hover:bg-green-900/30 text-gray-600 dark:text-gray-400 hover:text-green-600'
+            }`}
+          >
+            {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+          </button>
+          
+          <button
+            type="button"
             onClick={() => onVoiceToggle(!isVoiceActive)}
             className={`p-3 rounded-xl transition-all duration-300 ${
               isVoiceActive
@@ -137,7 +202,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 : 'bg-gray-100 dark:bg-gray-700 hover:bg-green-50 dark:hover:bg-green-900/30 text-gray-600 dark:text-gray-400 hover:text-green-600'
             }`}
           >
-            {isVoiceActive ? <MicOff size={20} /> : <Mic size={20} />}
+            {isVoiceActive ? '🎤' : '🤖'}
           </button>
           
           <button
