@@ -77,41 +77,33 @@ export const WeatherAdvice: React.FC<WeatherAdviceProps> = ({ userPreferences, i
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-blue-50 p-4 rounded-xl">
               <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-xl">
                 <div className="flex items-center space-x-2 mb-2">
                   <Thermometer size={20} className="text-blue-500" />
-                  <span className="text-sm font-medium text-gray-700">Temperature</span>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Temperature</span>
                 </div>
                 <p className="text-2xl font-bold text-blue-600">{weatherData.temperature}°C</p>
               </div>
 
-              <div className="bg-green-50 p-4 rounded-xl">
               <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-xl">
                 <div className="flex items-center space-x-2 mb-2">
                   <Droplets size={20} className="text-green-500" />
-                  <span className="text-sm font-medium text-gray-700">Humidity</span>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Humidity</span>
                 </div>
                 <p className="text-2xl font-bold text-green-600">{weatherData.humidity}%</p>
               </div>
 
-              <div className="bg-purple-50 p-4 rounded-xl">
               <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-xl">
                 <div className="flex items-center space-x-2 mb-2">
                   <Wind size={20} className="text-purple-500" />
-                  <span className="text-sm font-medium text-gray-700">Wind</span>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Wind</span>
                 </div>
                 <p className="text-2xl font-bold text-purple-600">12 km/h</p>
               </div>
 
-              <div className="bg-orange-50 p-4 rounded-xl">
               <div className="bg-orange-50 dark:bg-orange-900/30 p-4 rounded-xl">
                 <div className="flex items-center space-x-2 mb-2">
                   <Cloud size={20} className="text-orange-500" />
-                  <span className="text-sm font-medium text-gray-700">Conditions</span>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Conditions</span>
                 </div>
                 <p className="text-sm font-bold text-orange-600">{weatherData.conditions}</p>
@@ -145,7 +137,6 @@ export const WeatherAdvice: React.FC<WeatherAdviceProps> = ({ userPreferences, i
                       <p className="text-sm text-gray-600 dark:text-gray-400">{day.condition}</p>
                     </div>
                   </div>
-                  <p className="text-lg font-bold text-gray-800">{day.temp}°</p>
                   <p className="text-lg font-bold text-gray-800 dark:text-gray-200">{day.temp}°</p>
                 </div>
               ))}
