@@ -3,8 +3,6 @@ import { WeatherData } from '../types';
 export class WeatherService {
   async getCurrentWeather(location: string): Promise<WeatherData> {
     try {
-      // Using OpenWeatherMap's free tier (requires API key but has generous free limits)
-      // Fallback to free weather API if no key is provided
       const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
       
       if (apiKey && apiKey !== 'demo-key') {
@@ -15,36 +13,13 @@ export class WeatherService {
       }
     } catch (error) {
       console.error('Weather Service Error:', error);
-      return this.getFallbackWeatherData(location);
-    }
-  }
-
-  private async getFreeWeatherData(location: string): Promise<WeatherData> {
-    try {
-      // Using wttr.in free weather API
-      const response = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`);
-      const data = await response.json();
-      
-      const current = data.current_condition[0];
-      const forecast = data.weather;
-
-      return {
-        location: `${data.nearest_area[0].areaName[0].value}, ${data.nearest_area[0].country[0].value}`,
-        temperature: parseInt(current.temp_C),
-        humidity: parseInt(current.humidity),
-        conditions: current.weatherDesc[0].value,
-        advice: this.generateFarmingAdvice({
-          main: { temp: parseInt(current.temp_C), humidity: parseInt(current.humidity) },
-          weather: [{ main: current.weatherDesc[0].value }]
-        }),
-        forecast: forecast.slice(0, 5).map((day: any, index: number) => ({
-          day: index === 0 ? 'Today' : new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
-          temp: parseInt(day.maxtempC),
-          condition: day.hourly[0].weatherDesc[0].value
-        }))
-      };
-    } catch (error) {
-      throw error;
+      // Try free API as fallback
+      try {
+        return await this.getFreeWeatherData(location);
+      } catch (fallbackError) {
+        console.error('Free Weather API Error:', fallbackError);
+        return this.getFallbackWeatherData(location);
+      }
     }
   }
 
@@ -73,6 +48,10 @@ export class WeatherService {
       `${BASE_URL}/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
     );
 
+    if (!weatherResponse.ok || !forecastResponse.ok) {
+      throw new Error('Weather API request failed');
+    }
+
     const current = await weatherResponse.json();
     const forecast = await forecastResponse.json();
 
@@ -86,6 +65,40 @@ export class WeatherService {
     };
   }
 
+  private async getFreeWeatherData(location: string): Promise<WeatherData> {
+    try {
+      // Using wttr.in free weather API
+      const response = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=j1`);
+      
+      if (!response.ok) {
+        throw new Error('Free weather API request failed');
+      }
+      
+      const data = await response.json();
+      
+      const current = data.current_condition[0];
+      const forecast = data.weather;
+
+      return {
+        location: `${data.nearest_area[0].areaName[0].value}, ${data.nearest_area[0].country[0].value}`,
+        temperature: parseInt(current.temp_C),
+        humidity: parseInt(current.humidity),
+        conditions: current.weatherDesc[0].value,
+        advice: this.generateFarmingAdvice({
+          main: { temp: parseInt(current.temp_C), humidity: parseInt(current.humidity) },
+          weather: [{ main: current.weatherDesc[0].value }]
+        }),
+        forecast: forecast.slice(0, 5).map((day: any, index: number) => ({
+          day: index === 0 ? 'Today' : new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
+          temp: parseInt(day.maxtempC),
+          condition: day.hourly[0].weatherDesc[0].value
+        }))
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
   private generateFarmingAdvice(weatherData: any): string[] {
     const advice: string[] = [];
     const temp = weatherData.main.temp;
@@ -95,28 +108,36 @@ export class WeatherService {
     // Temperature-based advice
     if (temp < 5) {
       advice.push('Protect sensitive plants from frost - consider row covers or bringing potted plants indoors');
+      advice.push('Good time for winter preparation tasks like mulching and tool maintenance');
     } else if (temp > 30) {
       advice.push('Provide shade for sensitive plants and increase watering frequency during hot weather');
+      advice.push('Early morning or late evening are best times for outdoor work');
     } else if (temp >= 15 && temp <= 25) {
       advice.push('Ideal temperature for most outdoor farming activities and planting');
+      advice.push('Perfect conditions for transplanting and garden maintenance');
     }
 
     // Humidity-based advice
     if (humidity > 80) {
       advice.push('High humidity may increase disease risk - ensure good air circulation around plants');
+      advice.push('Monitor for fungal issues and avoid overhead watering');
     } else if (humidity < 40) {
       advice.push('Low humidity may stress plants - consider mulching to retain soil moisture');
+      advice.push('Increase watering frequency and consider misting for humidity-loving plants');
     }
 
     // Weather condition advice
     if (condition.includes('rain')) {
       advice.push('Skip watering today - natural rainfall should be sufficient for most plants');
-      advice.push('Good time for indoor tasks like seed starting or planning');
+      advice.push('Good time for indoor tasks like seed starting, planning, or tool maintenance');
+      advice.push('Check for proper drainage to prevent waterlogged soil');
     } else if (condition.includes('sun')) {
       advice.push('Excellent conditions for photosynthesis and plant growth');
-      advice.push('Good day for transplanting and outdoor farming activities');
+      advice.push('Good day for transplanting, harvesting, and outdoor farming activities');
+      advice.push('Ensure adequate watering as sunny conditions increase evaporation');
     } else if (condition.includes('cloud')) {
       advice.push('Overcast conditions are ideal for transplanting to reduce plant stress');
+      advice.push('Good time for pruning and garden maintenance work');
     }
 
     return advice.length > 0 ? advice : ['Monitor your plants and adjust care based on their specific needs'];
@@ -175,7 +196,8 @@ export class WeatherService {
         'Weather data temporarily unavailable',
         'General advice: Check soil moisture before watering',
         'Monitor plants for signs of stress in current conditions',
-        'Consider local weather patterns for your region'
+        'Consider local weather patterns for your region',
+        'Early morning watering is generally best to reduce evaporation'
       ],
       forecast: [
         { day: 'Today', temp: 22, condition: 'Partly Cloudy' },

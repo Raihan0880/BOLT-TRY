@@ -4,9 +4,9 @@ A comprehensive farming assistant application with AI integration, plant identif
 
 ## Features
 
-- **AI Chat**: Intelligent farming advice with fallback responses
-- **Plant Identification**: Upload plant images for identification and health assessment using free APIs
-- **Weather Integration**: Real-time weather data with farming-specific advice using free weather services
+- **AI Chat**: Powered by Google Gemini AI with intelligent fallback responses
+- **Plant Identification**: Advanced plant identification using Plant.id API with free PlantNet fallback
+- **Weather Integration**: Real-time weather data using OpenWeatherMap with free weather service fallback
 - **Voice Assistant**: Speech recognition and synthesis for hands-free interaction
 - **Multi-language Support**: Configurable language preferences
 - **Dark Mode**: Toggle between light and dark themes with system preference detection
@@ -14,25 +14,34 @@ A comprehensive farming assistant application with AI integration, plant identif
 
 ## Setup Instructions
 
-### 1. API Keys (Optional)
+### 1. API Keys
 
-The application works with free APIs and fallback responses. For enhanced functionality, you can optionally add API keys by creating a `.env.local` file:
+The application uses premium APIs with free fallbacks. API keys are included in `.env.local`:
 
 ```env
+# AI Configuration
+VITE_GEMINI_API_KEY=AIzaSyAge-qq1GVUods3bNKqftck8ov_TmKY8Ic
 
-# OpenWeatherMap API (Optional - falls back to free weather API)
-VITE_WEATHER_API_KEY=your_openweather_api_key_here
+# Weather API
+VITE_WEATHER_API_KEY=02bc691d075c05733cc2af25925f87a7
 
-# Note: Plant identification uses free PlantNet API
-# Note: AI chat uses free Hugging Face API with intelligent fallbacks
+# Plant Identification API
+VITE_PLANT_API_KEY=cPhXXswE1v5YKGXp7cIVArQsfRwMpuCnblJogusHbYK1ZjWGRb
 ```
 
-### 2. Getting API Keys (Optional)
+### 2. API Services Used
+
+#### Google Gemini AI
+- Primary AI service for intelligent farming advice
+- Fallback to Hugging Face API if unavailable
 
 #### OpenWeatherMap
-1. Sign up at [OpenWeatherMap](https://openweathermap.org/api)
-2. Get a free API key
-3. Copy the key to `VITE_WEATHER_API_KEY`
+- Real-time weather data and forecasts
+- Fallback to wttr.in free weather API
+
+#### Plant.id
+- Advanced plant identification and health assessment
+- Fallback to PlantNet free API
 
 ### 3. Installation
 
@@ -60,18 +69,18 @@ npm run dev
 ## Technical Stack
 
 - **Frontend**: React + TypeScript + Tailwind CSS
-- **AI Service**: Hugging Face Inference API (free) with intelligent fallbacks
-- **Weather API**: wttr.in (free) with OpenWeatherMap fallback
-- **Plant ID**: PlantNet API (free) with basic analysis fallback
+- **AI Service**: Google Gemini AI with Hugging Face fallback
+- **Weather API**: OpenWeatherMap with wttr.in fallback  
+- **Plant ID**: Plant.id API with PlantNet fallback
 - **Voice**: Web Speech API
 - **Build Tool**: Vite
 
 ## Fallback Behavior
 
-The application is designed to work entirely with free services and includes comprehensive fallback responses:
-- Chat continues with basic responses if AI service fails
-- Weather shows demo data if free APIs are unavailable
-- Plant identification provides general care advice with basic analysis
+The application includes comprehensive fallback systems:
+- AI chat falls back to Hugging Face API, then to contextual responses
+- Weather falls back to free wttr.in API, then to demo data
+- Plant identification falls back to PlantNet API, then to basic analysis
 - Voice features gracefully degrade if not supported
 - Dark mode persists user preference and respects system settings
 

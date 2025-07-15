@@ -1,33 +1,89 @@
 import { UserPreferences } from '../types';
 
 export class AIService {
+  private async callGeminiAPI(message: string, userPreferences: UserPreferences, context?: string): Promise<string> {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    
+    if (!apiKey || apiKey === 'demo-key') {
+      throw new Error('Gemini API key not available');
+    }
+
+    const prompt = this.buildGeminiPrompt(message, userPreferences, context);
+    
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.candidates[0]?.content?.parts[0]?.text || 'I apologize, but I couldn\'t generate a response. Please try again.';
+  }
+
   async generateResponse(message: string, userPreferences: UserPreferences, context?: string): Promise<string> {
     try {
-      // Using Hugging Face's free inference API as fallback
-      const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          inputs: this.buildPrompt(message, userPreferences, context),
-          parameters: {
-            max_length: 200,
-            temperature: 0.7,
-            do_sample: true
-          }
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return data[0]?.generated_text || this.getFallbackResponse(message, userPreferences);
-      }
+      // Try Gemini API first
+      return await this.callGeminiAPI(message, userPreferences, context);
     } catch (error) {
-      console.error('AI Service Error:', error);
+      console.error('Gemini API Error:', error);
+      
+      try {
+        // Fallback to Hugging Face
+        const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputs: this.buildPrompt(message, userPreferences, context),
+            parameters: {
+              max_length: 200,
+              temperature: 0.7,
+              do_sample: true
+            }
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return data[0]?.generated_text || this.getFallbackResponse(message, userPreferences);
+        }
+      } catch (fallbackError) {
+        console.error('Hugging Face API Error:', fallbackError);
+      }
+      
+      return this.getFallbackResponse(message, userPreferences);
     }
-    
-    return this.getFallbackResponse(message, userPreferences);
+  }
+
+  private buildGeminiPrompt(message: string, userPreferences: UserPreferences, context?: string): string {
+    return `You are FarmAI, an expert agricultural assistant helping ${userPreferences.name} who farms in ${userPreferences.region}. 
+
+You should provide practical, actionable farming advice that's specific to their region when possible. Be friendly, knowledgeable, and concise.
+
+${context ? `Context: ${context}` : ''}
+
+User Question: ${message}
+
+Please provide a helpful response about farming, agriculture, plant care, or related topics:`;
   }
 
   private buildPrompt(message: string, userPreferences: UserPreferences, context?: string): string {

@@ -3,17 +3,86 @@ import { PlantIdentification } from '../types';
 export class PlantService {
   async identifyPlant(imageBase64: string): Promise<PlantIdentification> {
     try {
-      // Using PlantNet API (free alternative) or fallback to image analysis
-      return await this.analyzePlantImage(imageBase64);
+      const apiKey = import.meta.env.VITE_PLANT_API_KEY;
+      
+      if (apiKey && apiKey !== 'demo-key') {
+        return await this.callPlantIdAPI(imageBase64, apiKey);
+      } else {
+        // Use free PlantNet API as fallback
+        return await this.callPlantNetAPI(imageBase64);
+      }
     } catch (error) {
       console.error('Plant Service Error:', error);
-      return this.getFallbackIdentification();
+      // Try free API as fallback
+      try {
+        return await this.callPlantNetAPI(imageBase64);
+      } catch (fallbackError) {
+        console.error('Free Plant API Error:', fallbackError);
+        return this.getFallbackIdentification();
+      }
     }
   }
 
-  private async analyzePlantImage(imageBase64: string): Promise<PlantIdentification> {
+  private async callPlantIdAPI(imageBase64: string, apiKey: string): Promise<PlantIdentification> {
+    const response = await fetch('https://api.plant.id/v2/identify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Api-Key': apiKey,
+      },
+      body: JSON.stringify({
+        images: [imageBase64],
+        modifiers: ['crops_fast', 'similar_images', 'health_only', 'disease_similar_images'],
+        plant_language: 'en',
+        plant_details: ['common_names', 'url', 'description', 'taxonomy', 'rank', 'gbif_id', 'inaturalist_id', 'image', 'synonyms', 'edible_parts', 'watering', 'propagation_methods']
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Plant.id API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.suggestions && data.suggestions.length > 0) {
+      const suggestion = data.suggestions[0];
+      const plantName = suggestion.plant_name;
+      const confidence = suggestion.probability;
+      
+      // Check health assessment
+      let health = 'Healthy';
+      let healthRecommendations: string[] = [];
+      
+      if (data.health_assessment) {
+        const diseases = data.health_assessment.diseases;
+        if (diseases && diseases.length > 0) {
+          const topDisease = diseases[0];
+          if (topDisease.probability > 0.5) {
+            health = 'Warning - Possible Disease';
+            healthRecommendations.push(`Possible ${topDisease.name}: ${topDisease.description}`);
+          }
+        }
+      }
+      
+      const recommendations = [
+        ...this.generateBasicRecommendations(plantName),
+        ...healthRecommendations
+      ];
+
+      return {
+        name: plantName,
+        confidence: confidence,
+        health: health,
+        recommendations: recommendations
+      };
+    }
+    
+    throw new Error('No plant identification results');
+  }
+
+  private async callPlantNetAPI(imageBase64: string): Promise<PlantIdentification> {
     try {
-      // Try PlantNet API (free, no key required)
+      // PlantNet API (free, no key required)
       const response = await fetch('https://my-api.plantnet.org/v2/identify/weurope', {
         method: 'POST',
         headers: {
@@ -69,9 +138,10 @@ export class PlantService {
     if (lowerName.includes('tomato')) {
       return [
         'Provide full sun (6-8 hours daily)',
-        'Water deeply but infrequently',
-        'Support with stakes or cages',
-        'Watch for common pests like hornworms'
+        'Water deeply but infrequently at soil level',
+        'Support with stakes or cages as plants grow',
+        'Watch for common pests like hornworms and aphids',
+        'Fertilize regularly during growing season'
       ];
     }
     
@@ -80,25 +150,48 @@ export class PlantService {
         'Plant in well-draining soil with morning sun',
         'Water at soil level to prevent leaf diseases',
         'Prune regularly to promote air circulation',
-        'Apply mulch to retain moisture'
+        'Apply mulch to retain moisture and suppress weeds',
+        'Feed with rose-specific fertilizer during growing season'
       ];
     }
     
     if (lowerName.includes('basil') || lowerName.includes('herb')) {
       return [
-        'Provide warm, sunny location',
-        'Pinch flowers to encourage leaf growth',
-        'Water when soil feels dry',
-        'Harvest regularly to promote growth'
+        'Provide warm, sunny location (6+ hours of sun)',
+        'Pinch flowers to encourage continued leaf growth',
+        'Water when soil feels dry to touch',
+        'Harvest regularly to promote bushy growth',
+        'Protect from cold temperatures'
       ];
     }
     
     if (lowerName.includes('lettuce') || lowerName.includes('leafy')) {
       return [
-        'Prefers cool weather and partial shade',
-        'Keep soil consistently moist',
-        'Harvest outer leaves first',
-        'Protect from hot afternoon sun'
+        'Prefers cool weather and partial shade in hot climates',
+        'Keep soil consistently moist but not waterlogged',
+        'Harvest outer leaves first for continuous production',
+        'Protect from hot afternoon sun',
+        'Plant successively for continuous harvest'
+      ];
+    }
+
+    if (lowerName.includes('pepper')) {
+      return [
+        'Needs warm soil and full sun exposure',
+        'Water consistently but avoid overwatering',
+        'Support heavy-fruiting plants with stakes',
+        'Harvest regularly to encourage more production',
+        'Protect from strong winds'
+      ];
+    }
+
+    if (lowerName.includes('sunflower')) {
+      return [
+        'Plant in full sun with well-draining soil',
+        'Water deeply but infrequently once established',
+        'Provide support for tall varieties',
+        'Deadhead spent flowers unless saving seeds',
+        'Watch for birds if growing for seeds'
       ];
     }
     
@@ -107,8 +200,9 @@ export class PlantService {
       'Ensure appropriate sunlight for plant type',
       'Water when top inch of soil feels dry',
       'Monitor for pests and diseases regularly',
-      'Fertilize during growing season',
-      'Provide good drainage to prevent root rot'
+      'Fertilize during growing season as needed',
+      'Provide good drainage to prevent root rot',
+      'Mulch around plants to retain moisture'
     ];
   }
 
@@ -122,7 +216,8 @@ export class PlantService {
         'Try taking a clearer photo with good lighting',
         'Focus on distinctive features like leaves, flowers, or fruits',
         'Consider using multiple plant identification resources',
-        'Consult local gardening experts or extension services'
+        'Consult local gardening experts or extension services',
+        'Check plant identification books or field guides'
       ]
     };
   }

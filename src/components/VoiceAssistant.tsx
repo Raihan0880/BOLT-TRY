@@ -8,12 +8,14 @@ interface VoiceAssistantProps {
   isActive: boolean;
   onToggle: (active: boolean) => void;
   userPreferences: UserPreferences;
+  isDarkMode: boolean;
 }
 
 export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
   isActive,
   onToggle,
-  userPreferences
+  userPreferences,
+  isDarkMode
 }) => {
   const [voiceState, setVoiceState] = useState<VoiceState>({
     isListening: false,
@@ -76,13 +78,13 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl p-6 w-80">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-80">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Voice Assistant</h3>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Voice Assistant</h3>
           <button
             onClick={() => onToggle(false)}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <VolumeX size={20} />
           </button>
@@ -110,7 +112,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
 
         {/* Status */}
         <div className="text-center mb-4">
-          <p className="text-sm font-medium text-gray-800">
+          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
             {voiceState.isListening && 'Listening...'}
             {voiceState.isProcessing && 'Processing...'}
             {voiceState.isSpeaking && 'Speaking...'}
@@ -120,8 +122,8 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
 
         {/* Transcript */}
         {transcript && (
-          <div className="bg-gray-50 rounded-xl p-3 mb-4">
-            <p className="text-sm text-gray-700">{transcript}</p>
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 mb-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300">{transcript}</p>
           </div>
         )}
 
@@ -136,6 +138,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
           </button>
           
           <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl transition-colors flex items-center space-x-2">
+          <button className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-xl transition-colors flex items-center space-x-2">
             <Volume2 size={16} />
             <span>Settings</span>
           </button>
