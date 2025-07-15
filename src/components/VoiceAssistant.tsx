@@ -137,7 +137,6 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({
             <span>Stop</span>
           </button>
           
-          <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl transition-colors flex items-center space-x-2">
           <button className="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-xl transition-colors flex items-center space-x-2">
             <Volume2 size={16} />
             <span>Settings</span>
