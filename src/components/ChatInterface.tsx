@@ -65,6 +65,47 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setMessages(prev => [...prev, userMessage, aiMessage]);
   };
 
+  // Handle weather requests in chat
+  const handleWeatherRequest = async () => {
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: 'What\'s the current weather?',
+      isUser: true,
+      timestamp: new Date(),
+      type: 'text'
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
+
+    try {
+      const weatherData = await weatherService.getCurrentWeather(userPreferences.region);
+      const weatherResponse = `Current weather in ${weatherData.location}: ${weatherData.temperature}°C, ${weatherData.conditions}, ${weatherData.humidity}% humidity. ${weatherData.advice[0] || 'Have a great day farming!'}`;
+      
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: weatherResponse,
+        isUser: false,
+        timestamp: new Date(),
+        type: 'weather',
+        metadata: { weatherData }
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Weather request error:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "I couldn't fetch the current weather. Please try again or check the weather tab for detailed information.",
+        isUser: false,
+        timestamp: new Date(),
+        type: 'text'
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
   const handleVoiceInput = async () => {
     if (!voiceService.isSupported()) {
       alert('Voice input is not supported in this browser');
@@ -238,6 +279,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               className="w-full px-4 py-3 pr-12 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
             />
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={handleWeatherRequest}
+                className="text-gray-400 dark:text-gray-500 hover:text-blue-500 transition-colors"
+                title="Get current weather"
+              >
+                <Thermometer size={18} />
+              </button>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}

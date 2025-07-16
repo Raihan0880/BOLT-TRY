@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Thermometer } from 'lucide-react';
 import { useDarkMode } from './hooks/useDarkMode';
 import { Sidebar } from './components/Sidebar';
 import { ChatInterface } from './components/ChatInterface';
@@ -57,6 +58,12 @@ function App() {
       setIsVoiceActive(false);
     }
   };
+
+  // Quick weather access
+  const handleQuickWeatherCheck = () => {
+    setActiveTab('weather');
+  };
+
   if (userPreferences.isFirstTime) {
     return (
       <WelcomeScreen 
@@ -101,6 +108,14 @@ function App() {
         )}
       </main>
 
+      {/* Quick Weather Floating Button */}
+      <button
+        onClick={handleQuickWeatherCheck}
+        className="fixed bottom-6 left-6 bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-40"
+        title="Quick weather check"
+      >
+        <Thermometer size={20} />
+      </button>
       <VoiceAssistant 
         isActive={isVoiceActive}
         onToggle={setIsVoiceActive}

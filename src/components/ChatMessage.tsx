@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, User, Leaf, CheckCircle, AlertCircle } from 'lucide-react';
+import { Bot, User, Leaf, CheckCircle, AlertCircle, Thermometer, Droplets, Wind } from 'lucide-react';
 import { Message } from '../types';
 
 interface ChatMessageProps {
@@ -45,6 +45,36 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             </div>
             <div className="text-xs text-green-600 dark:text-green-400">
               Confidence: {(plant.confidence * 100).toFixed(0)}%
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    if (message.type === 'weather' && message.metadata?.weatherData) {
+      const weather = message.metadata.weatherData;
+      
+      return (
+        <div className="space-y-3">
+          <p className="text-sm leading-relaxed">{message.text}</p>
+          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-blue-700 dark:text-blue-300">{weather.location}</span>
+              <span className="text-sm text-blue-600 dark:text-blue-400">{weather.conditions}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="flex items-center space-x-1">
+                <Thermometer size={12} className="text-blue-500" />
+                <span className="text-blue-600 dark:text-blue-400">{weather.temperature}°C</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Droplets size={12} className="text-blue-500" />
+                <span className="text-blue-600 dark:text-blue-400">{weather.humidity}%</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Wind size={12} className="text-blue-500" />
+                <span className="text-blue-600 dark:text-blue-400">12 km/h</span>
+              </div>
             </div>
           </div>
         </div>
