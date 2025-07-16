@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Mic, MicOff, Image, Paperclip } from 'lucide-react';
+import { Send, Mic, MicOff, Image, Paperclip, Camera } from 'lucide-react';
 import { Message, UserPreferences } from '../types';
 import { ChatMessage } from './ChatMessage';
 import { TypingIndicator } from './TypingIndicator';
 import { aiService } from '../services/aiService';
 import { voiceService } from '../services/voiceService';
+import { plantService } from '../services/plantService';
 
 interface ChatInterfaceProps {
   userPreferences: UserPreferences;
@@ -31,7 +32,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [showImageUpload, setShowImageUpload] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -76,6 +79,76 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     } catch (error) {
       console.error('Voice input error:', error);
       setIsListening(false);
+    }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Add user message with image
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: 'I uploaded an image for plant identification',
+      isUser: true,
+      timestamp: new Date(),
+      type: 'image',
+      metadata: { imageFile: file }
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
+
+    try {
+      // Analyze the plant
+      const plantResult = await plantService.analyzeImageFile(file);
+      
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: `I've identified this as a ${plantResult.name} with ${(plantResult.confidence * 100).toFixed(0)}% confidence. Health status: ${plantResult.health}. Here are my care recommendations: ${plantResult.recommendations.slice(0, 3).join(', ')}.`,
+        isUser: false,
+        timestamp: new Date(),
+        type: 'plant',
+        metadata: { plantResult }
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Plant identification error:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "I couldn't identify the plant in your image. Please try again with a clearer photo showing the plant's distinctive features.",
+        isUser: false,
+        timestamp: new Date(),
+        type: 'text'
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+      setShowImageUpload(false);
+    }
+  };
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      
+      // Create a simple camera interface
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      video.autoplay = true;
+      video.playsInline = true;
+      
+      // You could implement a modal here for camera capture
+      // For now, we'll just trigger the file input as fallback
+      stream.getTracks().forEach(track => track.stop());
+      fileInputRef.current?.click();
+    } catch (error) {
+      console.error('Camera access error:', error);
+      // Fallback to file input
+      fileInputRef.current?.click();
     }
   };
 
@@ -167,15 +240,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
               <button
                 type="button"
+                onClick={() => fileInputRef.current?.click()}
                 className="text-gray-400 dark:text-gray-500 hover:text-green-500 transition-colors"
+                title="Upload image for plant identification"
               >
-                <Paperclip size={18} />
+                <Image size={18} />
               </button>
               <button
                 type="button"
+                onClick={startCamera}
                 className="text-gray-400 dark:text-gray-500 hover:text-green-500 transition-colors"
+                title="Take photo for plant identification"
               >
-                <Image size={18} />
+                <Camera size={18} />
               </button>
             </div>
           </div>
@@ -213,6 +290,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <Send size={20} />
           </button>
         </form>
+        
+        {/* Hidden file input for image upload */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="hidden"
+        />
       </div>
     </div>
   );

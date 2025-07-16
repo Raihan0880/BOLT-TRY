@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, User } from 'lucide-react';
+import { Bot, User, Leaf, CheckCircle, AlertCircle } from 'lucide-react';
 import { Message } from '../types';
 
 interface ChatMessageProps {
@@ -8,6 +8,51 @@ interface ChatMessageProps {
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
   const isUser = message.isUser;
+  
+  const renderMessageContent = () => {
+    if (message.type === 'image' && message.metadata?.imageFile) {
+      const imageUrl = URL.createObjectURL(message.metadata.imageFile);
+      return (
+        <div className="space-y-2">
+          <img 
+            src={imageUrl} 
+            alt="Uploaded plant" 
+            className="max-w-48 h-32 object-cover rounded-lg"
+          />
+          <p className="text-sm">{message.text}</p>
+        </div>
+      );
+    }
+    
+    if (message.type === 'plant' && message.metadata?.plantResult) {
+      const plant = message.metadata.plantResult;
+      const getHealthIcon = () => {
+        if (plant.health.toLowerCase().includes('healthy')) return <CheckCircle className="text-green-500" size={16} />;
+        return <AlertCircle className="text-yellow-500" size={16} />;
+      };
+      
+      return (
+        <div className="space-y-3">
+          <p className="text-sm leading-relaxed">{message.text}</p>
+          <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-3 space-y-2">
+            <div className="flex items-center space-x-2">
+              <Leaf size={16} className="text-green-500" />
+              <span className="font-medium text-green-700 dark:text-green-300">{plant.name}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              {getHealthIcon()}
+              <span className="text-sm text-green-600 dark:text-green-400">{plant.health}</span>
+            </div>
+            <div className="text-xs text-green-600 dark:text-green-400">
+              Confidence: {(plant.confidence * 100).toFixed(0)}%
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    return <p className="text-sm leading-relaxed">{message.text}</p>;
+  };
   
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in`}>
@@ -29,7 +74,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             ? 'bg-green-500 text-white rounded-br-md' 
             : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-bl-md'
         } shadow-sm`}>
-          <p className="text-sm leading-relaxed">{message.text}</p>
+          {renderMessageContent()}
           <p className={`text-xs mt-1 ${
             isUser ? 'text-green-100' : 'text-gray-500 dark:text-gray-400'
           }`}>

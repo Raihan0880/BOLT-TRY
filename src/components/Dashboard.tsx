@@ -93,7 +93,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ userPreferences, isDarkMod
                 <div className="text-2xl mb-2">🌱</div>
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Identify Plant</p>
               </button>
-              <button className="p-4 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-xl transition-colors text-center">
+              <button 
+                onClick={() => window.navigator?.mediaDevices?.getUserMedia({ video: true }).then(() => {
+                  // Could trigger camera modal here
+                }).catch(() => {
+                  // Fallback to file input
+                })}
+                className="p-4 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-xl transition-colors text-center"
+              >
                 <div className="text-2xl mb-2">🌤️</div>
                 <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Check Weather</p>
               </button>

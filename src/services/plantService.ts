@@ -222,6 +222,17 @@ export class PlantService {
     };
   }
 
+  async analyzeImageFromDataUrl(dataUrl: string): Promise<PlantIdentification> {
+    try {
+      // Extract base64 data from data URL
+      const base64Data = dataUrl.split(',')[1];
+      return await this.identifyPlant(base64Data);
+    } catch (error) {
+      console.error('Error analyzing image from data URL:', error);
+      throw error;
+    }
+  }
+
   async analyzeImageFile(file: File): Promise<PlantIdentification> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
